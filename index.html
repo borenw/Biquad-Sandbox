@@ -154,10 +154,11 @@
     overflow-y: auto;
   }
   .sec {
-    font-size: 8px;
-    letter-spacing: 3px;
-    color: var(--label);
+    font-size: 12px;
+    letter-spacing: 2px;
+    color: #8aaabb;
     text-transform: uppercase;
+    font-weight: 600;
     padding-bottom: 7px;
     border-bottom: 1px solid var(--border);
   }
@@ -256,9 +257,10 @@
 
   .plbl {
     position: absolute; top: 10px; left: 13px;
-    font-size: 8px; letter-spacing: 3px;
-    color: var(--label); text-transform: uppercase;
+    font-size: 12px; letter-spacing: 2px;
+    color: #8aaabb; text-transform: uppercase;
     z-index: 10; pointer-events: none;
+    font-weight: 600;
   }
 
   canvas { width: 100%; height: 100%; display: block; }
@@ -364,8 +366,8 @@
 <div class="httpbar">
   <span class="method">GET</span>
   <input class="url-input" id="urlInput" type="text"
-    placeholder="https://borenw.github.io/Biquad-Sandbox/?b0=1&b1=0&b2=0&a1=-0.9375&a2=0"
-    value="https://borenw.github.io/Biquad-Sandbox/?b0=1&b1=0&b2=0&a1=-0.9375&a2=0"
+    placeholder="https://borenw.github.io/Biquad_Sandbox/?b0=1&b1=0&b2=0&a1=-0.9375&a2=0"
+    value="https://borenw.github.io/Biquad_Sandbox/?b0=1&b1=0&b2=0&a1=-0.9375&a2=0"
     onkeydown="if(event.key==='Enter')fetchCoeffs()">
   <span class="fmt-hint">JSON: {b0,b1,b2,a1,a2}</span>
   <button class="fetch-btn" id="fetchBtn" onclick="fetchCoeffs()">FETCH</button>
@@ -451,13 +453,13 @@
 
 <script>
 // ── State ──
-let C = { b0:1, b1:0, b2:0, a1:-0.9375, a2:0 };
+let C = { b0:1, b1:0, b2:0, a0:1, a1:-0.9375, a2:0 };
 let poles=[], zeros=[];
 let palType=null, drag=null;
 
 // ── Coefficient defs ──
 const bDefs=[{id:'b0',lbl:'b₀'},{id:'b1',lbl:'b₁'},{id:'b2',lbl:'b₂'}];
-const aDefs=[{id:'a1',lbl:'a₁'},{id:'a2',lbl:'a₂'}];
+const aDefs=[{id:'a0',lbl:'a₀'},{id:'a1',lbl:'a₁'},{id:'a2',lbl:'a₂'}];
 
 // ── Power-of-2 fraction display ──
 // Finds nearest n/2^p with p up to 8 (denominator up to 256)
@@ -483,7 +485,7 @@ function toFrac2(v){
 }
 
 function updateFracs(){
-  ['b0','b1','b2','a1','a2'].forEach(id=>{
+  ['b0','b1','b2','a0','a1','a2'].forEach(id=>{
     const el=document.getElementById(`fr_${id}`);
     if(el && document.activeElement!==el) el.value = toFrac2(C[id]??0);
   });
@@ -528,7 +530,7 @@ function buildUI(){
 }
 
 function setUI(){
-  ['b0','b1','b2','a1','a2'].forEach(id=>{
+  ['b0','b1','b2','a0','a1','a2'].forEach(id=>{
     const v=C[id]??0;
     const sl=document.getElementById(`sl_${id}`),ni=document.getElementById(`ni_${id}`);
     if(sl){sl.value=v;ni.value=v.toFixed(4);}
@@ -538,13 +540,13 @@ function setUI(){
 
 // ── Presets ──
 const PRE={
-  li: {b0:1,  b1:0,     b2:0,    a1:-0.9375, a2:0},
-  lp: {b0:0.292,b1:0.585,b2:0.292,a1:-0.169,a2:0.176},
-  hp: {b0:0.745,b1:-1.490,b2:0.745,a1:-0.942,a2:0.333},
-  bp: {b0:0.145,b1:0,b2:-0.145,a1:-1.507,a2:0.710},
-  notch:{b0:0.872,b1:-1.390,b2:0.872,a1:-1.390,a2:0.745},
-  ap: {b0:0.333,b1:-0.942,b2:1,a1:-0.942,a2:0.333},
-  rst:{b0:1,b1:0,b2:0,a1:0,a2:0},
+  li:   {b0:1,     b1:0,      b2:0,    a0:1, a1:-0.9375, a2:0},
+  lp:   {b0:0.292, b1:0.585,  b2:0.292,a0:1, a1:-0.169,  a2:0.176},
+  hp:   {b0:0.745, b1:-1.490, b2:0.745,a0:1, a1:-0.942,  a2:0.333},
+  bp:   {b0:0.145, b1:0,      b2:-0.145,a0:1,a1:-1.507,  a2:0.710},
+  notch:{b0:0.872, b1:-1.390, b2:0.872,a0:1, a1:-1.390,  a2:0.745},
+  ap:   {b0:0.333, b1:-0.942, b2:1,    a0:1, a1:-0.942,  a2:0.333},
+  rst:  {b0:1,     b1:0,      b2:0,    a0:1, a1:0,        a2:0},
 };
 function preset(k){ Object.assign(C,PRE[k]); setUI(); sync(); all(); }
 
@@ -734,9 +736,10 @@ function sf(){fc_el.width=fpw.clientWidth;fc_el.height=fpw.clientHeight;}
 
 function H(w){
   const{b0,b1,b2,a1,a2}=C;
+  const a0=C.a0||1;
   const c1=Math.cos(w),s1=Math.sin(w),c2=Math.cos(2*w),s2=Math.sin(2*w);
   const nr=b0+b1*c1+b2*c2,ni=-b1*s1-b2*s2;
-  const dr=1+a1*c1+a2*c2,di=-a1*s1-a2*s2;
+  const dr=a0+a1*c1+a2*c2,di=-a1*s1-a2*s2;
   const dm=dr*dr+di*di;
   if(dm<1e-12)return 0;
   const rr=(nr*dr+ni*di)/dm,ri=(ni*dr-nr*di)/dm;
@@ -817,10 +820,15 @@ function drawF(){
     fctx.fillStyle = db===0 ? '#6ab0e0' : '#8aaabb';
     fctx.fillText(`${db}`, pL-5, dbToY(db)+4);
   });
-  // dB rotated label
+  // Y axis rotated labels
   fctx.save();
   fctx.translate(12, pT+ph/2); fctx.rotate(-Math.PI/2);
-  fctx.fillStyle='#7a9aaa'; fctx.font='11px JetBrains Mono'; fctx.textAlign='center';
+  fctx.fillStyle='#8aaabb'; fctx.font='bold 11px JetBrains Mono'; fctx.textAlign='center';
+  fctx.fillText('|Y[n]/X[n]|', 0, 0);
+  fctx.restore();
+  fctx.save();
+  fctx.translate(12, pT+ph*0.82); fctx.rotate(-Math.PI/2);
+  fctx.fillStyle='#5a7a8a'; fctx.font='10px JetBrains Mono'; fctx.textAlign='center';
   fctx.fillText('dB', 0, 0);
   fctx.restore();
 
@@ -1047,9 +1055,10 @@ function updateEq(){
     term(b1,'z⁻¹','inherit') + '  +  ' +
     term(b2,'z⁻²','inherit');
 
-  // Denominator: 1 + a1*z^-1 + a2*z^-2
+  // Denominator: a0 + a1*z^-1 + a2*z^-2
+  const a0=C.a0??1;
   document.getElementById('denS').innerHTML =
-    '<span>1</span>  +  ' +
+    term(a0,'','inherit') + '  +  ' +
     term(a1,'z⁻¹','inherit') + '  +  ' +
     term(a2,'z⁻²','inherit');
 
@@ -1223,7 +1232,8 @@ function drawD(){
 
   // ── a0 GAIN → y[n] ──
   arw(xADD+addR, r0, xATRI-triHW, r0, '#00e5ff');
-  tri('a₀=1', xATRI, r0, '#00e5ff', false, true);
+  const a0v=C.a0??1;
+  tri(`a₀=${a0v.toFixed(2)}`, xATRI, r0, '#00e5ff', false, Math.abs(a0v)>EPS);
   arw(xATRI+triHW, r0, xRBUS, r0, '#00e5ff');
 
   // ── y[n] ──
@@ -1478,13 +1488,10 @@ function buildShareUrl(){
   const rawUrl = document.getElementById('urlInput').value.trim();
   // Strip any existing query string to get the base URL
   const base = rawUrl ? rawUrl.split('?')[0] : window.location.href.split('?')[0];
-  const {b0,b1,b2,a1,a2} = C;
+  const {b0,b1,b2,a1,a2}=C; const a0=C.a0??1;
   const qs = new URLSearchParams({
-    b0: b0.toFixed(4),
-    b1: b1.toFixed(4),
-    b2: b2.toFixed(4),
-    a1: a1.toFixed(4),
-    a2: a2.toFixed(4),
+    b0: b0.toFixed(4), b1: b1.toFixed(4), b2: b2.toFixed(4),
+    a0: a0.toFixed(4), a1: a1.toFixed(4), a2: a2.toFixed(4),
   }).toString();
   return `${base}?${qs}`;
 }
@@ -1532,7 +1539,7 @@ new ResizeObserver(raz).observe(document.body);
 // ── On load: read coefficients from URL query params ──
 function loadFromUrl(){
   const p = new URLSearchParams(window.location.search);
-  const keys = ['b0','b1','b2','a1','a2'];
+  const keys = ['b0','b1','b2','a0','a1','a2'];
   let found = false;
   keys.forEach(k=>{ if(p.has(k)){ C[k]=parseFloat(p.get(k)); found=true; } });
   if(found){ setUI(); setStatus('loaded from URL params','ok'); }
